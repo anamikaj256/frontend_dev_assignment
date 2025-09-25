@@ -73,7 +73,7 @@ export async function GET(request: NextRequest) {
       },
       { status: 200, headers }
     )
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error('API Error:', err)
     return NextResponse.json(
       { success: false, error: err?.message ?? 'Internal Server Error', timestamp: new Date().toISOString() },

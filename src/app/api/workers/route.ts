@@ -61,7 +61,7 @@ export async function GET(request: NextRequest) {
         },
       }
     )
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error('API Error:', err)
     return NextResponse.json(
       {
