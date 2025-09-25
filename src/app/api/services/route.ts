@@ -1,82 +1,83 @@
 import { NextRequest, NextResponse } from 'next/server'
 import workersData from '../../../../workers.json'
 
-// GET /api/services
+const GST_RATE = 0.18
+
 export async function GET(request: NextRequest) {
   try {
-    // Simulate API delay
-    await new Promise(resolve => setTimeout(resolve, 50 + Math.random() * 100))
+    // tiny optional delay for dev realism
+    await new Promise((r) => setTimeout(r, 50 + Math.random() * 80))
 
-    // Extract unique services from workers data
-    const services = Array.from(new Set(workersData.map(worker => worker.service)))
-    
-    // Get service statistics
-    const serviceStats = services.map(service => {
-      const workersInService = workersData.filter(worker => worker.service === service)
-      const avgPrice = Math.round(
-        workersInService.reduce((sum, worker) => sum + worker.pricePerDay, 0) / workersInService.length
-      )
-      const minPrice = Math.min(...workersInService.map(w => w.pricePerDay))
-      const maxPrice = Math.max(...workersInService.map(w => w.pricePerDay))
+    const services = Array.from(new Set(workersData.map((w) => w.service)))
+
+    const serviceStats = services.map((service) => {
+      const workersInService = workersData.filter((w) => w.service === service)
+      const prices = workersInService
+        .map((w) => w.pricePerDay)
+        .filter((p) => typeof p === 'number' && !Number.isNaN(p))
+
+      const averageBase = prices.length ? prices.reduce((s, p) => s + p, 0) / prices.length : null
+      const minBase = prices.length ? Math.min(...prices) : null
+      const maxBase = prices.length ? Math.max(...prices) : null
+
+      const averageDisplayed = averageBase !== null ? Math.round(averageBase * (1 + GST_RATE)) : null
+      const minDisplayed = minBase !== null ? Math.round(minBase * (1 + GST_RATE)) : null
+      const maxDisplayed = maxBase !== null ? Math.round(maxBase * (1 + GST_RATE)) : null
 
       return {
         name: service,
         count: workersInService.length,
-        averagePrice: avgPrice,
+        // keep both base and displayed values so consumers can choose
+        averagePrice: averageBase !== null ? Math.round(averageBase) : null, // base (rounded)
+        averageDisplayed, // GST-inclusive
         priceRange: {
-          min: minPrice,
-          max: maxPrice
-        }
+          min: minBase !== null ? Math.round(minBase) : null,
+          max: maxBase !== null ? Math.round(maxBase) : null,
+        },
+        priceRangeDisplayed: {
+          min: minDisplayed,
+          max: maxDisplayed,
+        },
       }
     })
 
-    // Sort by count (most popular services first)
     serviceStats.sort((a, b) => b.count - a.count)
 
     const { searchParams } = new URL(request.url)
     const includeStats = searchParams.get('stats') === 'true'
 
-    if (includeStats) {
-      return NextResponse.json({
-        success: true,
-        data: serviceStats,
-        metadata: {
-          totalServices: services.length,
-          totalWorkers: workersData.length
-        },
-        timestamp: new Date().toISOString()
-      }, {
-        status: 200,
-        headers: {
-          'Content-Type': 'application/json',
-          'Cache-Control': 'public, max-age=300',
-        }
-      })
-    } else {
-      return NextResponse.json({
-        success: true,
-        data: services,
-        metadata: {
-          count: services.length
-        },
-        timestamp: new Date().toISOString()
-      }, {
-        status: 200,
-        headers: {
-          'Content-Type': 'application/json',
-          'Cache-Control': 'public, max-age=300',
-        }
-      })
+    const headers = {
+      'Content-Type': 'application/json',
+      'Cache-Control': 'public, max-age=300',
     }
 
-  } catch (error) {
-    console.error('API Error:', error)
+    if (includeStats) {
+      return NextResponse.json(
+        {
+          success: true,
+          data: serviceStats,
+          metadata: { totalServices: services.length, totalWorkers: workersData.length },
+          timestamp: new Date().toISOString(),
+        },
+        { status: 200, headers }
+      )
+    }
 
-    return NextResponse.json({
-      success: false,
-      error: 'Internal Server Error',
-      message: 'Failed to fetch services',
-      timestamp: new Date().toISOString()
-    }, { status: 500 })
+    // default: return just service names
+    return NextResponse.json(
+      {
+        success: true,
+        data: services,
+        metadata: { count: services.length },
+        timestamp: new Date().toISOString(),
+      },
+      { status: 200, headers }
+    )
+  } catch (err: any) {
+    console.error('API Error:', err)
+    return NextResponse.json(
+      { success: false, error: err?.message ?? 'Internal Server Error', timestamp: new Date().toISOString() },
+      { status: 500 }
+    )
   }
 }

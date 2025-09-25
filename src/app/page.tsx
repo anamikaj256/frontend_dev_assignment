@@ -1,57 +1,41 @@
-'use client'
-import { WorkerType } from '@/types/workers'
-import Image from 'next/image'
-import { useState, useEffect } from 'react'
+import Link from 'next/link'
+import React from 'react'
 
-export default function WorkersPage() {
-  const [workersData, setWorkersData] = useState<WorkerType[]>([])
-
-  useEffect(() => {
-    const loadData = async () => {
-      try {
-        const response = await import('../../workers.json')
-        setWorkersData(response.default)
-      } catch (error) {
-        console.error('Failed to load workers:', error)
-      }
-    }
-    loadData()
-    loadData()
-  }, [])
-
+export default function HomePage() {
   return (
-    <main className='container mx-auto px-4 py-8 bg-[#000000]'>
-      <h1 className='text-3xl font-bold mb-8 text-center'>Our Workers</h1>
+    <main className="min-h-screen bg-[#0000000] text-white flex flex-col">
+      {/* Centered hero */}
+      <section className="flex-grow flex items-center justify-center">
+        <div className="text-center px-4">
+          <h1 className="text-4xl sm:text-5xl font-extrabold mb-4">Gigora</h1>
+          <p className="text-lg sm:text-xl text-gray-300 mb-6">
+            Find skilled local workers quickly — compare prices and services.
+          </p>
 
-      <div className='grid grid-cols-1 sm:grid-cols-2 md:grid-cols-1 gap-6'>
-        {workersData
-          .filter((worker) => worker.pricePerDay > 0)
-          .filter((worker) => worker.id !== null)
-          .sort((a, b) => a.name.localeCompare(b.name))
-          .map((worker: WorkerType) => (
-            <div
-              key={worker.id}
-              className='border rounded-lg overflow-hidden shadow hover:shadow-lg transition-shadow duration-300'
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+            <Link
+              href="/workers"
+              className="inline-block px-6 py-3 rounded-2xl bg-sky-600 hover:bg-sky-700 font-semibold transition"
             >
-              <div className='w-full h-48 relative'>
-                <Image
-                  src={worker.image}
-                  alt={worker.name}
-                  fill
-                  className='object-cover'
-                  priority={worker.id <= 10}
-                />
-              </div>
-              <div className='p-4'>
-                <h2 className='text-xl font-semibold'>{worker.name}</h2>
-                <p className='text-gray-600'>{worker.service}</p>
-                <p className='mt-2 font-medium'>
-                  ₹{Math.round(worker.pricePerDay * 1.18)} / day
-                </p>
-              </div>
-            </div>
-          ))}
-      </div>
+              Browse Workers
+            </Link>
+
+            <Link
+              href="/services"
+              className="inline-block px-6 py-3 rounded-2xl bg-white/6 hover:bg-white/10 font-medium transition"
+            >
+              View Services
+            </Link>
+          </div>
+        </div>
+      </section>
+
+     
+      <footer className="py-6 text-center border-t border-white/5">
+        <div className="container mx-auto px-4">
+          <span className="text-sm text-gray-400">© {new Date().getFullYear()} Gigora</span>
+        </div>
+      </footer>
     </main>
   )
 }

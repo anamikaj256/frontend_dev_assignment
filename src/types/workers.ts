@@ -1,5 +1,5 @@
 export interface WorkerType {
-  id: number
+  id: number | null
   name: string
   service: string
   pricePerDay: number
