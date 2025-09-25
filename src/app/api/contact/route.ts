@@ -16,7 +16,19 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ success: true, message: 'Received' }, { status: 201, headers: { 'Cache-Control': 'no-store' } })
   } catch (err: unknown) {
-    console.error('[Contact] error:', err)
-    return NextResponse.json({ success: false, error: err?.message ?? 'Internal Server Error' }, { status: 500 })
+  console.error('[Contact] error:', err);
+
+  let message = 'Internal Server Error';
+  if (err instanceof Error) {
+    message = err.message;
   }
-}
+
+  return NextResponse.json(
+    {
+      success: false,
+      error: message,
+      timestamp: new Date().toISOString(),
+    },
+    { status: 500 }
+  );
+}}

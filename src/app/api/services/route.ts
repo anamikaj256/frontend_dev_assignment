@@ -74,10 +74,20 @@ export async function GET(request: NextRequest) {
       { status: 200, headers }
     )
   } catch (err: unknown) {
-    console.error('API Error:', err)
-    return NextResponse.json(
-      { success: false, error: err?.message ?? 'Internal Server Error', timestamp: new Date().toISOString() },
-      { status: 500 }
-    )
+  console.error('[Contact] error:', err);
+
+  let message = 'Internal Server Error';
+  if (err instanceof Error) {
+    message = err.message;
   }
+
+  return NextResponse.json(
+    {
+      success: false,
+      error: message,
+      timestamp: new Date().toISOString(),
+    },
+    { status: 500 }
+  );
+}
 }
